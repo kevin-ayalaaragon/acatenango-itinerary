@@ -440,3 +440,87 @@ section { padding: 6.5rem 0; }
   color: var(--ember);
   letter-spacing: .15em;
 }
+
+/* ── TRIP ILLUSTRATION ── */
+.trip-illustration {
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+  background: #0d1117;
+}
+
+/* ── CREW BOTTOM ── */
+.crew-bottom {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+}
+.crew-photo {
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  display: block;
+}
+.crew-caption {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--mist);
+  margin-top: .8rem;
+  text-align: center;
+}
+.crew-names-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+  padding-top: .5rem;
+}
+.crew-names-label {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.5rem;
+  letter-spacing: .08em;
+  color: var(--cream);
+  line-height: 1;
+}
+.crew-names-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .7rem;
+}
+.crew-name {
+  font-family: 'Space Mono', monospace;
+  font-size: .78rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: .4rem 1rem;
+  border-radius: 20px;
+  border: 1px solid rgba(232,80,10,.4);
+  color: var(--ember);
+  background: rgba(232,80,10,.06);
+}
+.crew-name:nth-child(even) {
+  border-color: rgba(201,168,76,.4);
+  color: var(--gold);
+  background: rgba(201,168,76,.06);
+}
+.crew-trip-info {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+.crew-trip-info span {
+  font-family: 'Space Mono', monospace;
+  font-size: .65rem;
+  letter-spacing: .1em;
+  color: var(--mist);
+}
+
+@media (max-width: 760px) {
+  .crew-bottom { grid-template-columns: 1fr; }
+  .crew-names-wrap { padding-top: 0; }
+}
