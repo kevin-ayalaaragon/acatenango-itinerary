@@ -1,10 +1,11 @@
 from django.shortcuts import render
-from django.http import JsonResponse
 from django.conf import settings
-from datetime import date
+from datetime import datetime
+import zoneinfo
 from .data import STOPS, TIMELINE, GEAR, STATS
 
 # Trip date range
+from datetime import date
 TRIP_START = date(2025, 4, 23)
 TRIP_END   = date(2025, 4, 28)
 
@@ -17,9 +18,16 @@ DAY_DATES = {
     "Apr 28": date(2025, 4, 28),
 }
 
+# Use Guatemala timezone so the date is always correct regardless of server location
+GUATEMALA_TZ = zoneinfo.ZoneInfo("America/Guatemala")
+
+
+def get_today():
+    return datetime.now(GUATEMALA_TZ).date()
+
 
 def get_trip_status(today=None):
-    today = today or date.today()
+    today = today or get_today()
     if today < TRIP_START:
         delta = (TRIP_START - today).days
         return {
@@ -47,9 +55,9 @@ def get_trip_status(today=None):
 
 
 def annotate_stops(stops, trip_status):
-    today_label = trip_status.get("today_label")
-    trip_state  = trip_status["trip_state"]
-    annotated   = []
+    today_label  = trip_status.get("today_label")
+    trip_state   = trip_status["trip_state"]
+    annotated    = []
     marked_today = False
 
     for stop in stops:
