@@ -10,7 +10,6 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   const STOPS = window.STOPS_DATA || [];
   if (!STOPS.length || typeof L === 'undefined') return;
 
-  // Dark OSM tile layer via CartoDB Dark Matter (free, no key)
   const map = L.map('map', { zoomControl: true, attributionControl: true })
     .setView([14.52, -90.80], 11);
 
@@ -20,25 +19,82 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
     maxZoom: 19,
   }).addTo(map);
 
-  // Route polyline
-  const latlngs = STOPS.map(s => [s.lat, s.lng]);
-  L.polyline(latlngs, { color: '#e8500a', weight: 2.5, opacity: 0.7 }).addTo(map);
+  // Route polyline — split into done (grey) and upcoming (ember)
+  const doneLatLngs     = [];
+  const upcomingLatLngs = [];
+  let hitToday = false;
 
-  // Custom circular marker using divIcon
+  STOPS.forEach(s => {
+    if (s.status === 'done') {
+      doneLatLngs.push([s.lat, s.lng]);
+    } else {
+      if (!hitToday && s.status === 'today') {
+        // Bridge the gap between done and today
+        const last = doneLatLngs[doneLatLngs.length - 1];
+        if (last) upcomingLatLngs.push(last);
+        hitToday = true;
+      }
+      upcomingLatLngs.push([s.lat, s.lng]);
+    }
+  });
+
+  if (doneLatLngs.length > 1) {
+    L.polyline(doneLatLngs, { color: '#555', weight: 2, opacity: 0.4 }).addTo(map);
+  }
+  if (upcomingLatLngs.length > 1) {
+    L.polyline(upcomingLatLngs, { color: '#e8500a', weight: 2.5, opacity: 0.7 }).addTo(map);
+  }
+  // Fallback if no status data
+  if (doneLatLngs.length <= 1 && upcomingLatLngs.length <= 1) {
+    L.polyline(STOPS.map(s => [s.lat, s.lng]), { color: '#e8500a', weight: 2.5, opacity: 0.7 }).addTo(map);
+  }
+
+  // Marker styles per status
   function makeIcon(stop) {
+    const status   = stop.status || 'upcoming';
     const isSummit = stop.id === 'summit';
-    const size = isSummit ? 18 : 14;
-    const color = isSummit ? '#c9a84c' : '#e8500a';
+
+    let color, size, shadow, pulse = '';
+
+    if (status === 'done') {
+      color  = '#555555';
+      size   = 10;
+      shadow = '0 0 4px #33333388';
+    } else if (status === 'today') {
+      color  = '#c9a84c';
+      size   = 18;
+      shadow = `0 0 16px #c9a84caa`;
+      pulse  = `animation: markerPulse 1.8s ease-in-out infinite;`;
+    } else {
+      // upcoming
+      color  = isSummit ? '#c9a84c' : '#e8500a';
+      size   = isSummit ? 16 : 13;
+      shadow = `0 0 ${isSummit ? 14 : 8}px ${color}88`;
+    }
+
     return L.divIcon({
       className: '',
       html: `<div style="
         width:${size}px;height:${size}px;border-radius:50%;
         background:${color};border:2px solid #1a1814;
-        box-shadow:0 0 ${isSummit ? 14 : 8}px ${color}88;
+        box-shadow:${shadow};${pulse}
       "></div>`,
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
     });
+  }
+
+  // Inject pulse keyframe once
+  if (!document.getElementById('marker-pulse-style')) {
+    const style = document.createElement('style');
+    style.id = 'marker-pulse-style';
+    style.textContent = `
+      @keyframes markerPulse {
+        0%,100% { transform: scale(1);   opacity: 1;   }
+        50%      { transform: scale(1.4); opacity: 0.8; }
+      }
+    `;
+    document.head.appendChild(style);
   }
 
   const stopEls = document.querySelectorAll('.stop-item');
@@ -50,6 +106,12 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
     return marker;
   });
 
+  // Auto-fly to today's stop on load
+  const todayIdx = STOPS.findIndex(s => s.status === 'today');
+  if (todayIdx !== -1) {
+    map.setView([STOPS[todayIdx].lat, STOPS[todayIdx].lng], 12);
+  }
+
   stopEls.forEach((el, i) => {
     el.addEventListener('click', () => {
       activateStop(i);
@@ -60,14 +122,13 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   function activateStop(idx) {
     stopEls.forEach(el => el.classList.remove('active'));
     stopEls[idx]?.classList.add('active');
-    // Pulse effect: briefly scale the marker
     const el = markers[idx]?.getElement();
     if (el) {
       el.style.transition = 'transform .15s';
-      el.style.transform = 'scale(1.7)';
+      el.style.transform  = 'scale(1.7)';
       setTimeout(() => { el.style.transform = 'scale(1)'; }, 300);
     }
   }
 
-  activateStop(0);
+  activateStop(todayIdx !== -1 ? todayIdx : 0);
 })();

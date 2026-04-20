@@ -396,6 +396,12 @@ section { padding: 6.5rem 0; }
   border-bottom: 1px solid var(--border);
 }
 .trip-banner-icon { font-size: 1.2rem; }
+.trip-banner-label {
+  font-family: 'Space Mono', monospace; font-size: .55rem;
+  letter-spacing: .2em; text-transform: uppercase;
+  opacity: .5; border-right: 1px solid currentColor;
+  padding-right: .9rem; margin-right: .1rem;
+}
 .trip-banner--before { background: rgba(201,168,76,.08); color: var(--gold); }
 .trip-banner--during {
   background: rgba(232,80,10,.1);

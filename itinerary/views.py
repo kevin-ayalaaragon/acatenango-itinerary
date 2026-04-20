@@ -1,24 +1,22 @@
 from django.shortcuts import render
-from django.conf import settings
-from datetime import datetime
+from datetime import date, datetime
 import zoneinfo
+import json
 from .data import STOPS, TIMELINE, GEAR, STATS
 
-# Trip date range
-from datetime import date
-TRIP_START = date(2025, 4, 23)
-TRIP_END   = date(2025, 4, 28)
+# ── TRIP DATES (2026) ──────────────────────────────────────────
+TRIP_START = date(2026, 4, 23)
+TRIP_END   = date(2026, 4, 28)
 
 DAY_DATES = {
-    "Apr 23": date(2025, 4, 23),
-    "Apr 24": date(2025, 4, 24),
-    "Apr 25": date(2025, 4, 25),
-    "Apr 26": date(2025, 4, 26),
-    "Apr 27": date(2025, 4, 27),
-    "Apr 28": date(2025, 4, 28),
+    "Apr 23": date(2026, 4, 23),
+    "Apr 24": date(2026, 4, 24),
+    "Apr 25": date(2026, 4, 25),
+    "Apr 26": date(2026, 4, 26),
+    "Apr 27": date(2026, 4, 27),
+    "Apr 28": date(2026, 4, 28),
 }
 
-# Use Guatemala timezone so the date is always correct regardless of server location
 GUATEMALA_TZ = zoneinfo.ZoneInfo("America/Guatemala")
 
 
@@ -37,10 +35,9 @@ def get_trip_status(today=None):
             "countdown": f"{delta} day{'s' if delta != 1 else ''} until departure",
         }
     elif today > TRIP_END:
-        delta = (today - TRIP_END).days
         return {
             "trip_state": "after",
-            "days_since": delta,
+            "days_since": (today - TRIP_END).days,
             "today_label": None,
             "countdown": None,
         }
@@ -112,7 +109,16 @@ def annotate_timeline(timeline_by_day, trip_status):
 
 
 def index(request):
-    trip_status = get_trip_status()
+    # Allow ?date=YYYY-MM-DD for testing
+    test_date = None
+    raw = request.GET.get('date')
+    if raw:
+        try:
+            test_date = datetime.strptime(raw, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+
+    trip_status = get_trip_status(today=test_date)
 
     days = {}
     for item in TIMELINE:
@@ -127,19 +133,14 @@ def index(request):
         "gear": GEAR,
         "stats": STATS,
         "trip_status": trip_status,
-        "stops_json": _stops_json(annotated_stops),
+        "stops_json": json.dumps([
+            {
+                "id": s["id"], "day": s["day"], "name": s["name"],
+                "time": s["time"], "lat": s["lat"], "lng": s["lng"],
+                "note": s["note"], "elevation": s["elevation"],
+                "status": s.get("status", "upcoming"),
+            }
+            for s in annotated_stops
+        ]),
     }
     return render(request, "itinerary/index.html", context)
-
-
-def _stops_json(stops):
-    import json
-    return json.dumps([
-        {
-            "id": s["id"], "day": s["day"], "name": s["name"],
-            "time": s["time"], "lat": s["lat"], "lng": s["lng"],
-            "note": s["note"], "elevation": s["elevation"],
-            "status": s.get("status", "upcoming"),
-        }
-        for s in stops
-    ])

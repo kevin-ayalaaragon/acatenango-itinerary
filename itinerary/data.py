@@ -339,8 +339,8 @@ GEAR = [
 ]
 
 STATS = [
-    {"value": "Apr 23–28", "label": "Trip Dates"},
+    {"value": "Apr '25", "label": "Trip Date"},
     {"value": "3,976m", "label": "Summit Elevation"},
-    {"value": "5 Nights", "label": "Duration"},
+    {"value": "6 Hikers", "label": "Crew"},
     {"value": "IAD → GUA", "label": "Route"},
 ]
