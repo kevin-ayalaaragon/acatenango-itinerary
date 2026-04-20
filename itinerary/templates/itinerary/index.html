@@ -74,17 +74,17 @@
 {% if trip_status.trip_state == 'before' %}
 <div class="trip-banner trip-banner--before">
   <span class="trip-banner-icon">✈️</span>
-  <span class="trip-banner-text">{{ trip_status.countdown }} &mdash; Guatemala is waiting.</span>
+  <span class="trip-banner-text">T-minus {{ trip_status.days_until }} days. Pack your layers.</span>
 </div>
 {% elif trip_status.trip_state == 'during' %}
 <div class="trip-banner trip-banner--during">
   <span class="trip-banner-icon">🌋</span>
-  <span class="trip-banner-text">You&rsquo;re on the trip right now &mdash; today is <strong>{{ trip_status.today_label }}</strong>.</span>
+  <span class="trip-banner-text">Live from Antigua &middot; {{ trip_status.today_label }}</span>
 </div>
 {% elif trip_status.trip_state == 'after' %}
 <div class="trip-banner trip-banner--after">
   <span class="trip-banner-icon">🏔️</span>
-  <span class="trip-banner-text">Trip complete &mdash; you hiked a volcano. That happened.</span>
+  <span class="trip-banner-text">Antigua, Guatemala &middot; April 23&ndash;28, 2025</span>
 </div>
 {% endif %}
 
