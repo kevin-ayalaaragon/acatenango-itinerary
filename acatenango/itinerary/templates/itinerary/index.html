@@ -1,0 +1,246 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Acatenango — Volcano Hike Itinerary</title>
+  <link rel="stylesheet" href="{% static 'itinerary/css/main.css' %}"/>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="nav">
+  <div class="nav-logo">Acatenango</div>
+  <ul class="nav-links">
+    <li><a href="#crew-section">Crew</a></li>
+    <li><a href="#map-section">Map</a></li>
+    <li><a href="#timeline-section">Timeline</a></li>
+    <li><a href="#poster-section">Poster</a></li>
+    <li><a href="#gear-section">Gear</a></li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero" id="hero">
+  <div class="stars"></div>
+  <div class="hero-bg"></div>
+  <svg class="volcano-svg" viewBox="0 0 700 600" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMaxYMax meet">
+    <path d="M520 600 L460 320 L500 290 L540 320 L590 600Z" fill="rgba(232,80,10,0.14)"/>
+    <path d="M700 600 L350 60 L0 600Z" fill="url(#volGrad)"/>
+    <path d="M350 60 L310 140 L390 140Z" fill="rgba(242,237,228,0.1)"/>
+    <ellipse cx="500" cy="290" rx="18" ry="8" fill="rgba(255,122,26,0.6)"/>
+    <ellipse cx="500" cy="290" rx="30" ry="14" fill="rgba(232,80,10,0.2)"/>
+    <circle cx="496" cy="270" r="2.5" fill="rgba(255,122,26,0.8)">
+      <animate attributeName="cy" values="270;228;270" dur="2.1s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.8;0;0.8" dur="2.1s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="504" cy="265" r="2" fill="rgba(232,80,10,0.9)">
+      <animate attributeName="cy" values="265;218;265" dur="1.7s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.9;0;0.9" dur="1.7s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="500" cy="272" r="1.5" fill="rgba(255,122,26,1)">
+      <animate attributeName="cy" values="272;240;272" dur="1.3s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="1;0;1" dur="1.3s" repeatCount="indefinite"/>
+    </circle>
+    <defs>
+      <linearGradient id="volGrad" x1="350" y1="60" x2="350" y2="600" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="rgba(46,43,38,0.2)"/>
+        <stop offset="100%" stop-color="rgba(13,17,23,0.0)"/>
+      </linearGradient>
+    </defs>
+  </svg>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Guatemala · Overnight Trek</p>
+    <h1 class="hero-title">Volc<span>á</span>n<br/>Acaten<span>ango</span></h1>
+    <p class="hero-sub">A 2-day ascent to 3,976m — where Fuego erupts across the valley at midnight.</p>
+    <div class="hero-stats">
+      {% for stat in stats %}
+      <div class="stat">
+        <span class="stat-val">{{ stat.value }}</span>
+        <span class="stat-label">{{ stat.label }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+
+<!-- ── TRIP STATUS BANNER ── -->
+{% if trip_status.trip_state == 'before' %}
+<div class="trip-banner trip-banner--before">
+  <span class="trip-banner-icon">✈️</span>
+  <span class="trip-banner-text">T-minus {{ trip_status.days_until }} days. Pack your layers.</span>
+</div>
+{% elif trip_status.trip_state == 'during' %}
+<div class="trip-banner trip-banner--during">
+  <span class="trip-banner-icon">🌋</span>
+  <span class="trip-banner-text">Live from Antigua &middot; {{ trip_status.today_label }}</span>
+</div>
+{% elif trip_status.trip_state == 'after' %}
+<div class="trip-banner trip-banner--after">
+  <span class="trip-banner-icon">🏔️</span>
+  <span class="trip-banner-text">Antigua, Guatemala &middot; April 23&ndash;28, 2025</span>
+</div>
+{% endif %}
+
+<!-- ── CREW SECTION ── -->
+<section id="crew-section">
+  <div class="section-inner">
+    <p class="section-tag reveal">The Crew</p>
+    <div class="crew-photo-wrap reveal">
+      <img src="{% static 'itinerary/img/group-photo.jpg' %}" alt="The crew — Acatenango 2025" class="crew-photo"/>
+      <div class="crew-caption">Apr 23–28, 2025 · Antigua, Guatemala · Volcán Acatenango 3,976m</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MAP SECTION ── -->
+<section id="map-section">
+  <div class="section-inner">
+    <p class="section-tag reveal">Interactive Route</p>
+    <h2 class="section-title reveal">The Journey</h2>
+
+    <div class="map-layout reveal">
+      <div id="map-container"><div id="map"></div></div>
+      <div id="stops-list">
+        {% for stop in stops %}
+        <div class="stop-item stop-item--{{ stop.status }}" data-idx="{{ forloop.counter0 }}">
+          <div class="stop-day">{{ stop.day }}</div>
+          <div class="stop-name">{{ stop.name }}</div>
+          <div class="stop-meta">
+            <span>{{ stop.time }}</span>
+            <span>{{ stop.elevation }}</span>
+          </div>
+          <div class="stop-note">{{ stop.note }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TIMELINE SECTION ── -->
+<section id="timeline-section">
+  <div class="section-inner">
+    <p class="section-tag reveal">Hour by Hour</p>
+    <h2 class="section-title reveal">Day-by-Day Timeline</h2>
+    <div class="timeline-wrap">
+      {% for day, day_data in timeline_by_day.items %}
+      <div class="day-header day-header--{{ day_data.status }} reveal">{{ day|upper }}</div>
+      {% for item in day_data.items %}
+      <div class="t-row reveal">
+        <div class="t-time">{{ item.time }}</div>
+        <div class="t-dot {% if item.major %}major{% endif %}"></div>
+        <div class="t-content">
+          <div class="t-label">{{ item.label }}</div>
+          <div class="t-desc">{{ item.desc }}</div>
+          <span class="t-badge">{{ item.badge }}</span>
+        </div>
+      </div>
+      {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── POSTER SECTION ── -->
+<section id="poster-section">
+  <div class="section-inner">
+    <p class="section-tag reveal">Keepsake</p>
+    <h2 class="section-title reveal">Trip Poster</h2>
+    <div class="poster-wrap reveal">
+      <div class="poster">
+        <div class="poster-corner tl"></div>
+        <div class="poster-corner tr"></div>
+        <div class="poster-corner bl"></div>
+        <div class="poster-corner br"></div>
+        <p class="poster-eyebrow">Guatemala · Central America</p>
+        <h2 class="poster-title">VOLC<span>Á</span>N<br/>ACATEN<span>ANGO</span></h2>
+        <p class="poster-subtitle">3,976 metres above sea level</p>
+        <!-- Elevation Profile -->
+        <svg class="elevation-svg" viewBox="0 0 600 160" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="elGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(232,80,10,0.5)"/>
+              <stop offset="100%" stop-color="rgba(232,80,10,0.02)"/>
+            </linearGradient>
+          </defs>
+          <line x1="0" y1="40" x2="600" y2="40" stroke="rgba(201,168,76,0.1)" stroke-width="1"/>
+          <line x1="0" y1="80" x2="600" y2="80" stroke="rgba(201,168,76,0.1)" stroke-width="1"/>
+          <line x1="0" y1="120" x2="600" y2="120" stroke="rgba(201,168,76,0.1)" stroke-width="1"/>
+          <text x="4" y="36"  fill="rgba(201,168,76,0.5)" font-family="monospace" font-size="8">3976m</text>
+          <text x="4" y="76"  fill="rgba(201,168,76,0.5)" font-family="monospace" font-size="8">3700m</text>
+          <text x="4" y="116" fill="rgba(201,168,76,0.5)" font-family="monospace" font-size="8">2200m</text>
+          <path d="M60 148 L100 148 L180 120 L260 48 L290 38 L320 48 L380 110 L460 148 L540 148"
+                fill="url(#elGrad)" stroke="rgba(232,80,10,0.9)" stroke-width="2"/>
+          <circle cx="290" cy="38" r="4" fill="rgba(201,168,76,1)"/>
+          <line x1="290" y1="18" x2="290" y2="30" stroke="rgba(201,168,76,0.8)" stroke-width="1"/>
+          <text x="262" y="14" fill="rgba(201,168,76,0.9)" font-family="monospace" font-size="9">SUMMIT</text>
+          <circle cx="260" cy="48" r="3" fill="rgba(232,80,10,1)"/>
+          <text x="230" y="65" fill="rgba(242,237,228,0.45)" font-family="monospace" font-size="8">BASE CAMP</text>
+          <circle cx="140" cy="130" r="3" fill="rgba(138,155,168,0.8)"/>
+          <text x="100" y="147" fill="rgba(242,237,228,0.38)" font-family="monospace" font-size="8">TRAILHEAD</text>
+          <circle cx="70" cy="148" r="3" fill="rgba(138,155,168,0.8)"/>
+          <text x="42" y="158" fill="rgba(242,237,228,0.38)" font-family="monospace" font-size="8">ANTIGUA</text>
+        </svg>
+        <div class="poster-stats">
+          {% for stat in stats %}
+          <div>
+            <span class="p-val">{{ stat.value }}</span>
+            <span class="p-lbl">{{ stat.label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="poster-checklist">
+          <div class="check-item">Depart Antigua 6 AM</div>
+          <div class="check-item">Trailhead ~8 AM</div>
+          <div class="check-item">Base Camp 3,700m</div>
+          <div class="check-item">Fuego views at night</div>
+          <div class="check-item">Summit push 4 AM</div>
+          <div class="check-item">Sunrise at 3,976m</div>
+          <div class="check-item">Descend by noon</div>
+          <div class="check-item">Back to Antigua 2 PM</div>
+        </div>
+        <div class="poster-footer">Volcán Acatenango · Chimaltenango, Guatemala · 14.500°N 90.875°W</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── GEAR SECTION ── -->
+<section id="gear-section">
+  <div class="section-inner">
+    <p class="section-tag reveal">What to Bring</p>
+    <h2 class="section-title reveal">Gear Checklist</h2>
+    <div class="gear-grid">
+      {% for cat in gear %}
+      <div class="gear-card reveal">
+        <div class="gear-icon">{{ cat.icon }}</div>
+        <div class="gear-cat">{{ cat.category }}</div>
+        <ul class="gear-list">
+          {% for item in cat.items %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── SCRIPTS ── -->
+<!-- Leaflet (free, no API key) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  window.STOPS_DATA = {{ stops_json|safe }};
+</script>
+<script src="{% static 'itinerary/js/main.js' %}"></script>
+
+</body>
+</html>
