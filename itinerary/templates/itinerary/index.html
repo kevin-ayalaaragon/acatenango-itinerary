@@ -13,6 +13,7 @@
 <nav class="nav">
   <div class="nav-logo">Acatenango</div>
   <ul class="nav-links">
+    <li><a href="#crew-section">Crew</a></li>
     <li><a href="#map-section">Map</a></li>
     <li><a href="#timeline-section">Timeline</a></li>
     <li><a href="#poster-section">Poster</a></li>
@@ -68,63 +69,48 @@
   </div>
 </section>
 
+
+<!-- ── TRIP STATUS BANNER ── -->
+{% if trip_status.trip_state == 'before' %}
+<div class="trip-banner trip-banner--before">
+  <span class="trip-banner-icon">✈️</span>
+  <span class="trip-banner-text">{{ trip_status.countdown }} &mdash; Guatemala is waiting.</span>
+</div>
+{% elif trip_status.trip_state == 'during' %}
+<div class="trip-banner trip-banner--during">
+  <span class="trip-banner-icon">🌋</span>
+  <span class="trip-banner-text">You&rsquo;re on the trip right now &mdash; today is <strong>{{ trip_status.today_label }}</strong>.</span>
+</div>
+{% elif trip_status.trip_state == 'after' %}
+<div class="trip-banner trip-banner--after">
+  <span class="trip-banner-icon">🏔️</span>
+  <span class="trip-banner-text">Trip complete &mdash; you hiked a volcano. That happened.</span>
+</div>
+{% endif %}
+
+<!-- ── CREW SECTION ── -->
+<section id="crew-section">
+  <div class="section-inner">
+    <p class="section-tag reveal">The Crew</p>
+    <h2 class="section-title reveal">Six People. One Volcano.</h2>
+    <div class="crew-photo-wrap reveal">
+      <img src="{% static 'itinerary/img/group-photo.jpg' %}" alt="The crew — Acatenango 2025" class="crew-photo"/>
+      <div class="crew-caption">Apr 23–28, 2025 · Antigua, Guatemala · Volcán Acatenango 3,976m</div>
+    </div>
+  </div>
+</section>
+
 <!-- ── MAP SECTION ── -->
 <section id="map-section">
   <div class="section-inner">
     <p class="section-tag reveal">Interactive Route</p>
     <h2 class="section-title reveal">The Journey</h2>
 
-    <!-- WEATHER BAR -->
-    <div class="weather-bar reveal">
-      <div id="weather-panel">
-        {% if weather %}
-          <div class="weather-content">
-            <span class="weather-emoji">{{ weather.emoji }}</span>
-            <div>
-              <div class="weather-temp">{{ weather.temp_c }}°C</div>
-              <div class="weather-desc">{{ weather.description }}</div>
-            </div>
-            <div class="weather-meta">
-              <span>Feels {{ weather.apparent_c }}°C</span>
-              <span>Wind {{ weather.wind_kmh }} km/h</span>
-              <span>Gusts {{ weather.gusts_kmh }} km/h</span>
-              <span>Cloud {{ weather.cloud_pct }}%</span>
-              <span>Visibility {{ weather.visibility_km }} km</span>
-              <span>Precip {{ weather.precip_mm }} mm</span>
-            </div>
-            {% if weather.hiking_advisory %}
-            <div class="weather-advisory advisory-{{ weather.hiking_advisory.level }}">
-              {{ weather.hiking_advisory.text }}
-            </div>
-            {% endif %}
-            <div style="margin-top:.5rem">
-              <span style="font-family:'Space Mono',monospace;font-size:.58rem;color:var(--mist)">
-                Updated {{ weather.fetched_at }} local time
-              </span>
-              <button class="weather-refresh-btn" id="weather-refresh" style="margin-left:1rem">↻ Refresh</button>
-            </div>
-          </div>
-        {% elif not weather_enabled %}
-          <span class="weather-off">Live weather is off</span>
-        {% else %}
-          <span class="weather-error">⚠ Weather data unavailable</span>
-        {% endif %}
-      </div>
-      <div class="weather-toggle-wrap">
-        <span class="weather-toggle-label">Live weather</span>
-        <label class="toggle-track">
-          <input type="checkbox" id="weather-toggle" {% if weather_enabled and weather %}checked{% endif %}/>
-          <span class="toggle-bg"></span>
-          <span class="toggle-thumb"></span>
-        </label>
-      </div>
-    </div>
-
     <div class="map-layout reveal">
       <div id="map-container"><div id="map"></div></div>
       <div id="stops-list">
         {% for stop in stops %}
-        <div class="stop-item" data-idx="{{ forloop.counter0 }}">
+        <div class="stop-item stop-item--{{ stop.status }}" data-idx="{{ forloop.counter0 }}">
           <div class="stop-day">{{ stop.day }}</div>
           <div class="stop-name">{{ stop.name }}</div>
           <div class="stop-meta">
@@ -145,9 +131,9 @@
     <p class="section-tag reveal">Hour by Hour</p>
     <h2 class="section-title reveal">Day-by-Day Timeline</h2>
     <div class="timeline-wrap">
-      {% for day, items in timeline_by_day.items %}
-      <div class="day-header reveal">{{ day|upper }}</div>
-      {% for item in items %}
+      {% for day, day_data in timeline_by_day.items %}
+      <div class="day-header day-header--{{ day_data.status }} reveal">{{ day|upper }}</div>
+      {% for item in day_data.items %}
       <div class="t-row reveal">
         <div class="t-time">{{ item.time }}</div>
         <div class="t-dot {% if item.major %}major{% endif %}"></div>

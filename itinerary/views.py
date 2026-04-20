@@ -1,68 +1,137 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
+from datetime import date
 from .data import STOPS, TIMELINE, GEAR, STATS
-from .weather import get_summit_weather
+
+# Trip date range
+TRIP_START = date(2025, 4, 23)
+TRIP_END   = date(2025, 4, 28)
+
+DAY_DATES = {
+    "Apr 23": date(2025, 4, 23),
+    "Apr 24": date(2025, 4, 24),
+    "Apr 25": date(2025, 4, 25),
+    "Apr 26": date(2025, 4, 26),
+    "Apr 27": date(2025, 4, 27),
+    "Apr 28": date(2025, 4, 28),
+}
+
+
+def get_trip_status(today=None):
+    today = today or date.today()
+    if today < TRIP_START:
+        delta = (TRIP_START - today).days
+        return {
+            "trip_state": "before",
+            "days_until": delta,
+            "today_label": None,
+            "countdown": f"{delta} day{'s' if delta != 1 else ''} until departure",
+        }
+    elif today > TRIP_END:
+        delta = (today - TRIP_END).days
+        return {
+            "trip_state": "after",
+            "days_since": delta,
+            "today_label": None,
+            "countdown": None,
+        }
+    else:
+        today_label = next((lbl for lbl, d in DAY_DATES.items() if d == today), None)
+        return {
+            "trip_state": "during",
+            "today_label": today_label,
+            "days_until": None,
+            "countdown": None,
+        }
+
+
+def annotate_stops(stops, trip_status):
+    today_label = trip_status.get("today_label")
+    trip_state  = trip_status["trip_state"]
+    annotated   = []
+    marked_today = False
+
+    for stop in stops:
+        s = dict(stop)
+        if trip_state == "before":
+            s["status"] = "upcoming"
+        elif trip_state == "after":
+            s["status"] = "done"
+        else:
+            stop_date  = DAY_DATES.get(stop["day"])
+            today_date = DAY_DATES.get(today_label)
+            if stop_date and today_date:
+                if stop_date < today_date:
+                    s["status"] = "done"
+                elif stop_date == today_date and not marked_today:
+                    s["status"] = "today"
+                    marked_today = True
+                else:
+                    s["status"] = "upcoming"
+            else:
+                s["status"] = "upcoming"
+        annotated.append(s)
+    return annotated
+
+
+def annotate_timeline(timeline_by_day, trip_status):
+    today_label = trip_status.get("today_label")
+    trip_state  = trip_status["trip_state"]
+    today_date  = DAY_DATES.get(today_label) if today_label else None
+    annotated   = {}
+
+    for day_label, items in timeline_by_day.items():
+        date_part = day_label.split(" — ")[0]
+        day_date  = DAY_DATES.get(date_part)
+
+        if trip_state == "before":
+            status = "upcoming"
+        elif trip_state == "after":
+            status = "done"
+        elif today_date and day_date:
+            if day_date < today_date:
+                status = "done"
+            elif day_date == today_date:
+                status = "today"
+            else:
+                status = "upcoming"
+        else:
+            status = "upcoming"
+
+        annotated[day_label] = {"items": items, "status": status}
+    return annotated
 
 
 def index(request):
-    """Main itinerary page — all sections in one view."""
-    weather = None
-    weather_enabled = getattr(settings, 'WEATHER_ENABLED', True)
+    trip_status = get_trip_status()
 
-    if weather_enabled:
-        weather = get_summit_weather(
-            settings.ACATENANGO_LAT,
-            settings.ACATENANGO_LNG,
-        )
-
-    # Group timeline by day for template rendering
     days = {}
     for item in TIMELINE:
         days.setdefault(item["day"], []).append(item)
 
+    annotated_stops    = annotate_stops(STOPS, trip_status)
+    annotated_timeline = annotate_timeline(days, trip_status)
+
     context = {
-        "stops": STOPS,
-        "timeline_by_day": days,
+        "stops": annotated_stops,
+        "timeline_by_day": annotated_timeline,
         "gear": GEAR,
         "stats": STATS,
-        "weather": weather,
-        "weather_enabled": weather_enabled,
-        "stops_json": _stops_json(STOPS),
+        "trip_status": trip_status,
+        "stops_json": _stops_json(annotated_stops),
     }
     return render(request, "itinerary/index.html", context)
 
 
-def weather_api(request):
-    """
-    AJAX endpoint — returns fresh weather JSON.
-    Called by the frontend toggle/refresh button.
-    """
-    if not getattr(settings, 'WEATHER_ENABLED', True):
-        return JsonResponse({"enabled": False})
-
-    data = get_summit_weather(
-        settings.ACATENANGO_LAT,
-        settings.ACATENANGO_LNG,
-    )
-    if data is None:
-        return JsonResponse({"error": "Weather data unavailable"}, status=503)
-    return JsonResponse({"enabled": True, "weather": data})
-
-
 def _stops_json(stops):
-    """Serialize stops to a JSON-safe list for the map JS."""
     import json
     return json.dumps([
         {
-            "id": s["id"],
-            "day": s["day"],
-            "name": s["name"],
-            "time": s["time"],
-            "lat": s["lat"],
-            "lng": s["lng"],
-            "note": s["note"],
-            "elevation": s["elevation"],
+            "id": s["id"], "day": s["day"], "name": s["name"],
+            "time": s["time"], "lat": s["lat"], "lng": s["lng"],
+            "note": s["note"], "elevation": s["elevation"],
+            "status": s.get("status", "upcoming"),
         }
         for s in stops
     ])
