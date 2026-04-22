@@ -4,6 +4,8 @@ A full-stack Django web app built to plan and share a group hike of **Volcán Ac
 
 **🔗 Live Demo:** [acatenango-itinerary.onrender.com](https://acatenango-itinerary.onrender.com/)
 
+![Acatenango Itinerary App](screenshot.png)
+
 ---
 
 ## What This Is
