@@ -73,21 +73,36 @@
 <!-- ── TRIP STATUS BANNER ── -->
 {% if trip_status.trip_state == 'before' %}
 <div class="trip-banner trip-banner--before">
-  <span class="trip-banner-label">Trip Status</span>
-  <span class="trip-banner-icon">✈️</span>
-  <span class="trip-banner-text">T-minus {{ trip_status.days_until }} days. Pack your layers.</span>
+  <div class="trip-banner-top">
+    <span class="trip-banner-label">Trip Status</span>
+    <span class="trip-banner-icon">✈️</span>
+    <span class="trip-banner-text">T-minus. Pack your layers.</span>
+  </div>
+  <div class="countdown-wrap">
+    <div class="countdown-unit"><span class="countdown-num" id="cd-days">--</span><span class="countdown-lbl">days</span></div>
+    <div class="countdown-sep">:</div>
+    <div class="countdown-unit"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-lbl">hours</span></div>
+    <div class="countdown-sep">:</div>
+    <div class="countdown-unit"><span class="countdown-num" id="cd-mins">--</span><span class="countdown-lbl">mins</span></div>
+    <div class="countdown-sep">:</div>
+    <div class="countdown-unit"><span class="countdown-num" id="cd-secs">--</span><span class="countdown-lbl">secs</span></div>
+  </div>
 </div>
 {% elif trip_status.trip_state == 'during' %}
 <div class="trip-banner trip-banner--during">
-  <span class="trip-banner-label">Trip Status</span>
-  <span class="trip-banner-icon">🌋</span>
-  <span class="trip-banner-text">Live from Antigua &middot; {{ trip_status.today_label }}</span>
+  <div class="trip-banner-top">
+    <span class="trip-banner-label">Trip Status</span>
+    <span class="trip-banner-icon">🌋</span>
+    <span class="trip-banner-text">Live from Antigua &middot; {{ trip_status.today_label }}</span>
+  </div>
 </div>
 {% elif trip_status.trip_state == 'after' %}
 <div class="trip-banner trip-banner--after">
-  <span class="trip-banner-label">Trip Status</span>
-  <span class="trip-banner-icon">🏔️</span>
-  <span class="trip-banner-text">Antigua, Guatemala &middot; April 23&ndash;28, 2026</span>
+  <div class="trip-banner-top">
+    <span class="trip-banner-label">Trip Status</span>
+    <span class="trip-banner-icon">🏔️</span>
+    <span class="trip-banner-text">Antigua, Guatemala &middot; April 23&ndash;28, 2026</span>
+  </div>
 </div>
 {% endif %}
 
@@ -492,6 +507,39 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 </script>
 
+<script>
+(function(){
+  // Live countdown to Apr 23 2026 5:52 PM IAD (ET = UTC-4 in April with DST)
+  const TARGET = new Date('2026-04-23T17:52:00-04:00');
+  const days  = document.getElementById('cd-days');
+  const hours = document.getElementById('cd-hours');
+  const mins  = document.getElementById('cd-mins');
+  const secs  = document.getElementById('cd-secs');
+  if (!days) return;
+
+  function pad(n) { return String(n).padStart(2,'0'); }
+
+  function tick() {
+    const diff = TARGET - Date.now();
+    if (diff <= 0) {
+      days.textContent = '00'; hours.textContent = '00';
+      mins.textContent = '00'; secs.textContent = '00';
+      return;
+    }
+    const totalSecs = Math.floor(diff / 1000);
+    const s = totalSecs % 60;
+    const m = Math.floor(totalSecs / 60) % 60;
+    const h = Math.floor(totalSecs / 3600) % 24;
+    const d = Math.floor(totalSecs / 86400);
+    days.textContent  = pad(d);
+    hours.textContent = pad(h);
+    mins.textContent  = pad(m);
+    secs.textContent  = pad(s);
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
 <!-- ── SCRIPTS ── -->
 <!-- Leaflet (free, no API key) -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
