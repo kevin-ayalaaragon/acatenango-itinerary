@@ -557,3 +557,11 @@ section { padding: 6.5rem 0; }
   padding-bottom: 1rem;
   line-height: 1;
 }
+.countdown-sublabel {
+  font-family: 'Space Mono', monospace;
+  font-size: .62rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--mist);
+  opacity: .7;
+}

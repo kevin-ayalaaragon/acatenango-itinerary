@@ -87,13 +87,32 @@
     <div class="countdown-sep">:</div>
     <div class="countdown-unit"><span class="countdown-num" id="cd-secs">--</span><span class="countdown-lbl">secs</span></div>
   </div>
+  <div class="countdown-sublabel">until departure · IAD 5:52 PM</div>
+</div>
+{% elif trip_status.trip_state == 'during' and trip_status.countdown_target == 'summit' %}
+<div class="trip-banner trip-banner--during">
+  <div class="trip-banner-top">
+    <span class="trip-banner-label">Trip Status</span>
+    <span class="trip-banner-icon">🌋</span>
+    <span class="trip-banner-text">On the mountain &middot; {{ trip_status.today_label }}</span>
+  </div>
+  <div class="countdown-wrap">
+    <div class="countdown-unit"><span class="countdown-num" id="cd-days">--</span><span class="countdown-lbl">days</span></div>
+    <div class="countdown-sep">:</div>
+    <div class="countdown-unit"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-lbl">hours</span></div>
+    <div class="countdown-sep">:</div>
+    <div class="countdown-unit"><span class="countdown-num" id="cd-mins">--</span><span class="countdown-lbl">mins</span></div>
+    <div class="countdown-sep">:</div>
+    <div class="countdown-unit"><span class="countdown-num" id="cd-secs">--</span><span class="countdown-lbl">secs</span></div>
+  </div>
+  <div class="countdown-sublabel">until the summit · Acatenango 3,976m</div>
 </div>
 {% elif trip_status.trip_state == 'during' %}
 <div class="trip-banner trip-banner--during">
   <div class="trip-banner-top">
     <span class="trip-banner-label">Trip Status</span>
-    <span class="trip-banner-icon">🌋</span>
-    <span class="trip-banner-text">Live from Antigua &middot; {{ trip_status.today_label }}</span>
+    <span class="trip-banner-icon">🏔️</span>
+    <span class="trip-banner-text">Summit complete &middot; Live from Antigua &middot; {{ trip_status.today_label }}</span>
   </div>
 </div>
 {% elif trip_status.trip_state == 'after' %}
@@ -509,8 +528,15 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <script>
 (function(){
-  // Live countdown to Apr 23 2026 5:52 PM IAD (ET = UTC-4 in April with DST)
-  const TARGET = new Date('2026-04-23T17:52:00-04:00');
+  // Departure: Apr 23 2026 5:52 PM ET
+  const DEPARTURE = new Date('2026-04-23T17:52:00-04:00');
+  // Summit: Apr 26 2026 5:30 AM Guatemala time (UTC-6)
+  const SUMMIT    = new Date('2026-04-26T05:30:00-06:00');
+
+  const now = Date.now();
+  // Pick the right target based on current time
+  const TARGET = now < DEPARTURE.getTime() ? DEPARTURE : SUMMIT;
+
   const days  = document.getElementById('cd-days');
   const hours = document.getElementById('cd-hours');
   const mins  = document.getElementById('cd-mins');

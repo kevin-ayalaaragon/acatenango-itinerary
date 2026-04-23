@@ -1,10 +1,9 @@
 from django.shortcuts import render
-from datetime import date, datetime
+from datetime import date, datetime, timezone, timedelta
 import zoneinfo
 import json
 from .data import STOPS, TIMELINE, GEAR, STATS
 
-# ── TRIP DATES (2026) ──────────────────────────────────────────
 TRIP_START = date(2026, 4, 23)
 TRIP_END   = date(2026, 4, 28)
 
@@ -18,37 +17,62 @@ DAY_DATES = {
 }
 
 GUATEMALA_TZ = zoneinfo.ZoneInfo("America/Guatemala")
+ET_TZ        = zoneinfo.ZoneInfo("America/New_York")
 
-
-def get_today():
-    return datetime.now(GUATEMALA_TZ).date()
+# Key datetimes
+DEPARTURE_DT = datetime(2026, 4, 23, 17, 52, 0, tzinfo=ET_TZ)        # IAD 5:52 PM ET
+SUMMIT_DT    = datetime(2026, 4, 26,  5, 30, 0, tzinfo=GUATEMALA_TZ)  # Summit ~5:30 AM GT
 
 
 def get_trip_status(today=None):
-    today = today or get_today()
-    if today < TRIP_START:
-        delta = (TRIP_START - today).days
+    now_utc = datetime.now(timezone.utc)
+
+    if today:
+        fake_now = datetime(today.year, today.month, today.day, 12, 0, 0, tzinfo=GUATEMALA_TZ)
+        now_utc = fake_now.astimezone(timezone.utc)
+
+    today_date = now_utc.astimezone(GUATEMALA_TZ).date()
+
+    dep_utc    = DEPARTURE_DT.astimezone(timezone.utc)
+    summit_utc = SUMMIT_DT.astimezone(timezone.utc)
+
+    # ── BEFORE DEPARTURE — countdown to takeoff ──
+    if now_utc < dep_utc:
+        delta_days = (TRIP_START - today_date).days
         return {
             "trip_state": "before",
-            "days_until": delta,
+            "countdown_target": "departure",
+            "countdown_label": "until departure",
+            "days_until": max(0, delta_days),
             "today_label": None,
-            "countdown": f"{delta} day{'s' if delta != 1 else ''} until departure",
         }
-    elif today > TRIP_END:
+
+    # ── AFTER TRIP ──
+    if today_date > TRIP_END:
         return {
             "trip_state": "after",
-            "days_since": (today - TRIP_END).days,
+            "days_since": (today_date - TRIP_END).days,
             "today_label": None,
-            "countdown": None,
+            "countdown_target": None,
         }
-    else:
-        today_label = next((lbl for lbl, d in DAY_DATES.items() if d == today), None)
+
+    # ── DURING TRIP — before summit: countdown to summit ──
+    if now_utc < summit_utc:
+        today_label = next((lbl for lbl, d in DAY_DATES.items() if d == today_date), None)
         return {
             "trip_state": "during",
+            "countdown_target": "summit",
+            "countdown_label": "until the summit",
             "today_label": today_label,
-            "days_until": None,
-            "countdown": None,
         }
+
+    # ── DURING TRIP — after summit ──
+    today_label = next((lbl for lbl, d in DAY_DATES.items() if d == today_date), None)
+    return {
+        "trip_state": "during",
+        "countdown_target": None,
+        "today_label": today_label,
+    }
 
 
 def annotate_stops(stops, trip_status):
@@ -109,7 +133,6 @@ def annotate_timeline(timeline_by_day, trip_status):
 
 
 def index(request):
-    # Allow ?date=YYYY-MM-DD for testing
     test_date = None
     raw = request.GET.get('date')
     if raw:
@@ -133,14 +156,18 @@ def index(request):
         "gear": GEAR,
         "stats": STATS,
         "trip_status": trip_status,
-        "stops_json": json.dumps([
-            {
-                "id": s["id"], "day": s["day"], "name": s["name"],
-                "time": s["time"], "lat": s["lat"], "lng": s["lng"],
-                "note": s["note"], "elevation": s["elevation"],
-                "status": s.get("status", "upcoming"),
-            }
-            for s in annotated_stops
-        ]),
+        "stops_json": _stops_json(annotated_stops),
     }
     return render(request, "itinerary/index.html", context)
+
+
+def _stops_json(stops):
+    return json.dumps([
+        {
+            "id": s["id"], "day": s["day"], "name": s["name"],
+            "time": s["time"], "lat": s["lat"], "lng": s["lng"],
+            "note": s["note"], "elevation": s["elevation"],
+            "status": s.get("status", "upcoming"),
+        }
+        for s in stops
+    ])
